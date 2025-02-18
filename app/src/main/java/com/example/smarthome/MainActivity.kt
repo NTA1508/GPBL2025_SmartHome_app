@@ -57,10 +57,10 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-        findViewById<Button>(R.id.button1).setOnClickListener {
-            val intent = Intent(this, MainActivity::class.java)
-            startActivity(intent)
-        }
+        //findViewById<Button>(R.id.button1).setOnClickListener {
+        //    val intent = Intent(this, MainActivity::class.java)
+        //    startActivity(intent)
+        //}
 
         btnSwitch.setOnClickListener {
             myRef.child("Toggle/switch").setValue(if (btnSwitch.isChecked) "1" else "0")
