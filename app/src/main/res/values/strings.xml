@@ -1,3 +1,7 @@
 <resources>
+<<<<<<< HEAD
     <string name="app_name">AndroidNotifications</string>
+=======
+    <string name="app_name">My Application</string>
+>>>>>>> daa1905066a9358168160c92004a30a70ebc8ee7
 </resources>
