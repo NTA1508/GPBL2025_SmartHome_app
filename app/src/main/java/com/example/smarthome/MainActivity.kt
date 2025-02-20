@@ -25,6 +25,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnSwitch: Switch
     private lateinit var btnSwitch1: Switch
     private lateinit var btnSwitch2: Switch
+    private lateinit var btnSwitch3: Switch
     private lateinit var bluetoothService: BluetoothService
     private val REQUEST_BLUETOOTH_PERMISSIONS = 1  // 権限リクエストのコード
 
@@ -46,6 +47,7 @@ class MainActivity : AppCompatActivity() {
         btnSwitch = findViewById(R.id.switch2)
         btnSwitch1 = findViewById(R.id.toggleButton4)
         btnSwitch2 = findViewById(R.id.toggleButton5)
+        btnSwitch3 = findViewById(R.id.toggleButton6)
 
         myRef.child("Toggle/switch").addValueEventListener(object : ValueEventListener {
             override fun onCancelled(error: DatabaseError) {}
@@ -56,6 +58,7 @@ class MainActivity : AppCompatActivity() {
                     btnSwitch.isChecked = true
                     btnSwitch1.visibility = View.VISIBLE
                     btnSwitch2.visibility = View.VISIBLE
+                    btnSwitch3.visibility = View.VISIBLE
 
                     myRef.child("automation/AC").addValueEventListener(object : ValueEventListener {
                         override fun onCancelled(error: DatabaseError) {}
@@ -72,10 +75,19 @@ class MainActivity : AppCompatActivity() {
                             btnSwitch2.isChecked = snapshot.value.toString() == "1"
                         }
                     })
+
+                    myRef.child("automation/door").addValueEventListener(object : ValueEventListener {
+                        override fun onCancelled(error: DatabaseError) {}
+
+                        override fun onDataChange(snapshot: DataSnapshot) {
+                            btnSwitch3.isChecked = snapshot.value.toString() == "1"
+                        }
+                    })
                 } else {
                     btnSwitch.isChecked = false
                     btnSwitch1.visibility = View.GONE
                     btnSwitch2.visibility = View.GONE
+                    btnSwitch3.visibility = View.GONE
                 }
             }
         })
@@ -92,6 +104,13 @@ class MainActivity : AppCompatActivity() {
         btnSwitch2.setOnClickListener {
             myRef.child("automation/light").setValue(if (btnSwitch2.isChecked) "1" else "0")
         }
+
+        btnSwitch3.setOnClickListener{
+            myRef.child("automation/door").setValue(if (btnSwitch3.isChecked) "1" else "0")
+        }
+
+
+
     }
 
     private fun checkBluetoothPermissions() {
