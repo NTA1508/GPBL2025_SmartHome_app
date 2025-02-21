@@ -8,6 +8,8 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Button;
+import android.widget.Switch;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -26,6 +28,8 @@ public class MainActivity extends AppCompatActivity {
     private BluetoothAdapter bluetoothAdapter;
 
     private static final UUID myUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+
+    private BluetoothSocket btSocket = null;
 
     private final ActivityResultLauncher<String> requestBluetoothPermission =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
@@ -48,12 +52,24 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
+        //light
         checkAndRequestBluetoothPermission();
+
+        //switch light
+        Switch switchLight = findViewById(R.id.switchLight);
+
+        switchLight.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                turnOnLight();  // Bật đèn khi switch được bật
+            } else {
+                turnOffLight(); // Tắt đèn khi switch bị tắt
+            }
+        });
 
         BluetoothDevice hc05 = bluetoothAdapter.getRemoteDevice("58:56:00:00:7B:ED");
         Log.d(TAG, "name: " + hc05.getName());
 
-        BluetoothSocket btSocket = null;
+        //BluetoothSocket btSocket = null;
         int counter = 0;
         do {
             try {
@@ -67,34 +83,34 @@ public class MainActivity extends AppCompatActivity {
             counter++;
         }while (!btSocket.isConnected() && counter < 3);
 
-        try {
-            OutputStream outputStream = btSocket.getOutputStream();
-            outputStream.write(48);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+//        try {
+//            OutputStream outputStream = btSocket.getOutputStream();
+//            outputStream.write(48);
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
+//
+//        InputStream inputStream = null;
+//        try {
+//            inputStream = btSocket.getInputStream();
+//            inputStream.skip(inputStream.available());
+//
+//            if (inputStream.available() > 0) {
+//                byte b = (byte) inputStream.read();
+//                Log.d(TAG, "CHAR: " + (char) b);
+//            } else {
+//                Log.w(TAG, "Không có dữ liệu trong InputStream");
+//            }
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
 
-        InputStream inputStream = null;
-        try {
-            inputStream = btSocket.getInputStream();
-            inputStream.skip(inputStream.available());
-
-            if (inputStream.available() > 0) {
-                byte b = (byte) inputStream.read();
-                Log.d(TAG, "CHAR: " + (char) b);
-            } else {
-                Log.w(TAG, "Không có dữ liệu trong InputStream");
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        try {
-            btSocket.close();
-            Log.d(TAG, "on disconnect: " + btSocket.isConnected());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+//        try {
+//            btSocket.close();
+//            Log.d(TAG, "Bluetooth đã ngắt kết nối");
+//        } catch (IOException e) {
+//            Log.e(TAG, "Lỗi khi đóng Bluetooth: " + e.getMessage());
+//        }
     }
 
     private void checkAndRequestBluetoothPermission() {
@@ -133,6 +149,41 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG, "Thiết bị: " + device.getName() + ", Địa chỉ MAC: " + device.getAddress());
             }
         }
+    }
+
+    //Test turn light 1
+    private void turnOnLight() {
+        new Thread(() -> {
+            if (btSocket != null && btSocket.isConnected()) {
+                try {
+                    OutputStream outputStream = btSocket.getOutputStream();
+                    outputStream.write(1);
+                    outputStream.flush();
+                    Log.d(TAG, "✅ Đã gửi lệnh BẬT đèn");
+                } catch (IOException e) {
+                    Log.e(TAG, "❌ Lỗi khi gửi lệnh BẬT đèn: " + e.getMessage());
+                }
+            } else {
+                Log.e(TAG, "❌ btSocket chưa được kết nối!");
+            }
+        }).start();
+    }
+
+    private void turnOffLight() {
+        new Thread(() -> {
+            if (btSocket != null && btSocket.isConnected()) {
+                try {
+                    OutputStream outputStream = btSocket.getOutputStream();
+                    outputStream.write(0); // Lệnh tắt đèn
+                    outputStream.flush();
+                    Log.d(TAG, "✅ Đã gửi lệnh TẮT đèn");
+                } catch (IOException e) {
+                    Log.e(TAG, "❌ Lỗi khi gửi lệnh TẮT đèn: " + e.getMessage());
+                }
+            } else {
+                Log.e(TAG, "❌ btSocket chưa được kết nối!");
+            }
+        }).start();
     }
 
 
