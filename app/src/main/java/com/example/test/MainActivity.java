@@ -82,35 +82,6 @@ public class MainActivity extends AppCompatActivity {
             }
             counter++;
         }while (!btSocket.isConnected() && counter < 3);
-
-//        try {
-//            OutputStream outputStream = btSocket.getOutputStream();
-//            outputStream.write(48);
-//        } catch (IOException e) {
-//            throw new RuntimeException(e);
-//        }
-//
-//        InputStream inputStream = null;
-//        try {
-//            inputStream = btSocket.getInputStream();
-//            inputStream.skip(inputStream.available());
-//
-//            if (inputStream.available() > 0) {
-//                byte b = (byte) inputStream.read();
-//                Log.d(TAG, "CHAR: " + (char) b);
-//            } else {
-//                Log.w(TAG, "Không có dữ liệu trong InputStream");
-//            }
-//        } catch (IOException e) {
-//            throw new RuntimeException(e);
-//        }
-
-//        try {
-//            btSocket.close();
-//            Log.d(TAG, "Bluetooth đã ngắt kết nối");
-//        } catch (IOException e) {
-//            Log.e(TAG, "Lỗi khi đóng Bluetooth: " + e.getMessage());
-//        }
     }
 
     private void checkAndRequestBluetoothPermission() {
