@@ -9,6 +9,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Switch;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -16,6 +17,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import android.os.Handler;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -39,6 +41,18 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
 
+    private final Handler handler = new Handler();
+
+    private TextView textViewTime;
+
+    private final Runnable updateTimeRunnable = new Runnable() {
+        @Override
+        public void run() {
+            textViewTime.setText(DateTime.getCurrentTime()); // Cập nhật thời gian
+            handler.postDelayed(this, 1000); // Lặp lại sau 1 giây
+        }
+    };
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -51,10 +65,39 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        //light
+        //Time
+        textViewTime = findViewById(R.id.textViewTime);
+
+        handler.post(updateTimeRunnable);
+        //Date
+        String currentDate = DateTime.getCurrentDate();
+        TextView textViewInfo = findViewById(R.id.textViewInfo);
+
+        if (textViewInfo != null) {
+            textViewInfo.setText(currentDate);
+        } else {
+            Log.e(TAG, "textViewInfo is null!");
+        }
+
+        //Location
+        TextView textViewIPLocation = findViewById(R.id.textViewLocation); // Kết nối TextView từ XML
+
+        IPLocationHelper.getLocationFromIP(new IPLocationHelper.IPAddressCallback() {
+            @Override
+            public void onLocationReceived(String city, String country) {
+                runOnUiThread(() -> textViewIPLocation.setText(city + ", " + country));
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                runOnUiThread(() -> textViewIPLocation.setText("Lỗi: " + errorMessage));
+            }
+        });
+
+        //Bluetooth Permission
         checkAndRequestBluetoothPermission();
 
-        //switch light
+        //Light
         Switch switchLight = findViewById(R.id.switchLight);
         Switch switchLight2 = findViewById(R.id.switchLight2);
 
@@ -330,5 +373,11 @@ public class MainActivity extends AppCompatActivity {
                 Log.e(TAG, "❌ btSocket chưa được kết nối!");
             }
         }).start();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        handler.removeCallbacks(updateTimeRunnable); // Ngừng cập nhật khi thoát Activity
     }
 }
