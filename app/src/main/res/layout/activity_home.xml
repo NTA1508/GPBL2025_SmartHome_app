@@ -14,6 +14,16 @@
     <!-- ImageView nằm sát trên cùng và tự động co giãn theo màn hình -->
 
         <ImageView
+            android:id="@+id/weatherImageView"
+            android:layout_width="153dp"
+            android:layout_height="151dp"
+            android:layout_marginTop="232dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.116"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
         android:id="@+id/imageView"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -24,6 +34,19 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintDimensionRatio="16:9" /> <!-- Tỷ lệ 16:9 -->
 
+
+        <Button
+            android:id="@+id/btnHistory"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:background="@drawable/history"
+            android:contentDescription="Lịch sử"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.956"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.021" />
 
         <TextView
             android:id="@+id/textViewTime"
@@ -93,35 +116,58 @@
         app:layout_constraintTop_toTopOf="@id/imageView5" />
 
         <!--        *****LIGHT*****-->
+<!--Temp and Humi-->
 
+        <ImageView
+            android:id="@+id/imageView3"
+            android:layout_width="36dp"
+            android:layout_height="33dp"
+            android:layout_marginStart="216dp"
+            android:layout_marginTop="288dp"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/humi" />
+
+        <ImageView
+            android:id="@+id/imageViewTemp"
+            android:layout_width="54dp"
+            android:layout_height="51dp"
+            android:layout_marginStart="208dp"
+            android:layout_marginTop="340dp"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"/>
 
         <TextView
             android:id="@+id/humidityTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Humidity: xx%"
-            android:textColor="@color/black"
-            android:textSize="20sp"
+            android:text="77.7%"
+            android:textColor="@color/blue"
+            android:textSize="30sp"
+            android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.09"
+            app:layout_constraintHorizontal_bias="0.881"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.361" />
+            app:layout_constraintVertical_bias="0.382" />
 
         <TextView
             android:id="@+id/tempTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Temperature: xxC"
-            android:textColor="@color/black"
-            android:textSize="20sp"
+            android:text="30.1°C"
+            android:textColor="@color/blue"
+            android:textSize="30sp"
+            android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.104"
+            app:layout_constraintHorizontal_bias="0.909"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.416" />
+            app:layout_constraintVertical_bias="0.473" />
 
         <ImageView
             android:id="@+id/imageView11"
