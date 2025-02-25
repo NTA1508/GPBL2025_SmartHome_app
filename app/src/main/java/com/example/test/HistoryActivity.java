@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -26,7 +27,7 @@ public class HistoryActivity extends AppCompatActivity {
     private ArrayAdapter<String> adapter;
     private List<String> notificationList;
 
-    private DatabaseReference envRef; // Biến Firebase
+    private DatabaseReference envRef;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,16 +35,11 @@ public class HistoryActivity extends AppCompatActivity {
         setContentView(R.layout.activity_history);
 
         // Nút Back
-        ImageButton btnBack = findViewById(R.id.btnBack);
-        if (btnBack != null) {
-            btnBack.setOnClickListener(v -> {
-                Intent intent = new Intent(HistoryActivity.this, MainActivity.class);
-                startActivity(intent);
-                finish(); // Kết thúc Activity này
-            });
-        } else {
-            Log.e("HistoryActivity", "btnBack not found in layout");
-        }
+        Button btnHistory = findViewById(R.id.btnBack);
+        btnHistory.setOnClickListener(v -> {
+            Intent intent = new Intent(HistoryActivity.this, MainActivity.class);
+            startActivity(intent);
+        });
 
         // Khởi tạo ListView
         notificationListView = findViewById(R.id.notification_list);
@@ -57,16 +53,16 @@ public class HistoryActivity extends AppCompatActivity {
         envRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                notificationList.clear(); // Xóa danh sách cũ
+                notificationList.clear();
 
                 for (DataSnapshot childSnapshot : snapshot.getChildren()) {
                     String message = childSnapshot.child("message").getValue(String.class);
                     if (message != null) {
-                        notificationList.add(message); // Thêm vào danh sách
+                        notificationList.add(message);
                     }
                 }
 
-                adapter.notifyDataSetChanged(); // Cập nhật giao diện ListView
+                adapter.notifyDataSetChanged();
             }
 
             @Override

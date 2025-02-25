@@ -12,7 +12,9 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Looper;
 import android.util.Log;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -35,9 +37,16 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Set;
 import java.util.UUID;
+
+import android.animation.ArgbEvaluator;
+import android.animation.ObjectAnimator;
+import android.graphics.Color;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "Bluetooth";
@@ -48,8 +57,11 @@ public class MainActivity extends AppCompatActivity {
     private BluetoothSocket btSocket = null;
 
     private ImageView weatherImageView;
+    private ImageView humidityImageView;
 
     private ImageView imageViewTemp;
+
+    private InputStream inputStream;
     private final ActivityResultLauncher<String> requestBluetoothPermission =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
                 if (isGranted) {
@@ -69,6 +81,8 @@ public class MainActivity extends AppCompatActivity {
 
     private Double lastTemp = null;
     private Double lastHumidity = null;
+
+    private ObjectAnimator animator;
 
     private final Runnable updateTimeRunnable = new Runnable() {
         @Override
@@ -92,6 +106,8 @@ public class MainActivity extends AppCompatActivity {
 
         weatherImageView = findViewById(R.id.weatherImageView);
 
+        humidityImageView = findViewById(R.id.imageView3);
+
         imageViewTemp = findViewById(R.id.imageViewTemp);
 
         //Time
@@ -103,7 +119,6 @@ public class MainActivity extends AppCompatActivity {
         btnHistory.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, HistoryActivity.class);
             startActivity(intent);
-            finish();
         });
 
         handler.post(updateTimeRunnable);
@@ -184,21 +199,36 @@ public class MainActivity extends AppCompatActivity {
         BluetoothDevice hc05 = bluetoothAdapter.getRemoteDevice("58:56:00:00:7B:ED");
         Log.d(TAG, "name: " + hc05.getName());
 
-        //BluetoothSocket btSocket = null;
         int counter = 0;
-        do {
+        boolean isConnected = false;
+
+        while (counter < 2 && !isConnected) {  // Thử tối đa 2 lần
             try {
                 btSocket = hc05.createRfcommSocketToServiceRecord(myUUID);
                 Log.d(TAG, "btSocket: " + btSocket);
-                btSocket.connect();
-                Log.d(TAG, "on connect: " + btSocket.isConnected());
+                btSocket.connect();  // Thử kết nối
+
+                if (btSocket.isConnected()) {
+                    inputStream = btSocket.getInputStream();
+                    Log.d(TAG, "Input Steam: " + inputStream);
+                    listenForData();
+                    Log.d(TAG, "✅ Kết nối thành công!");
+                    isConnected = true;
+                }
             } catch (IOException e) {
                 Log.e(TAG, "❌ Lỗi kết nối Bluetooth: " + e.getMessage());
                 runOnUiThread(() -> Toast.makeText(MainActivity.this, "Không thể kết nối với thiết bị Bluetooth", Toast.LENGTH_SHORT).show());
-                break;
+
+                try {
+                    if (btSocket != null) {
+                        btSocket.close();
+                    }
+                } catch (IOException closeException) {
+                    Log.e(TAG, "❌ Lỗi khi đóng socket: " + closeException.getMessage());
+                }
             }
             counter++;
-        } while (!btSocket.isConnected() && counter < 3);
+        }
 
         //Humidity and temp
         tempTextView = findViewById(R.id.tempTextView);
@@ -214,6 +244,7 @@ public class MainActivity extends AppCompatActivity {
                 updateWeatherStatus(temp, humidity);
 
                 updateTemp(temp);
+                updateHumi(humidity);
 
                 if (temp != null) {
                     tempTextView.setText(temp + "°C");
@@ -227,11 +258,15 @@ public class MainActivity extends AppCompatActivity {
                     humidityTextView.setText("湿度: データなし");
                 }
 
-                if ((temp != null && lastTemp != null && Math.abs(temp - lastTemp) >= 3) ||
-                        (humidity != null && lastHumidity != null && Math.abs(humidity - lastHumidity) >= 3)) {
+//                if ((temp != null && lastTemp != null && Math.abs(temp - lastTemp) >= 3) ||
+//                        (humidity != null && lastHumidity != null && Math.abs(humidity - lastHumidity) >= 3)) {
+//                    sendNotification(temp, humidity);
+//                }
+
+
+                if ((temp != null && !temp.equals(lastTemp)) || (humidity != null && !humidity.equals(lastHumidity))) {
                     sendNotification(temp, humidity);
                 }
-
 
                 lastTemp = temp;
                 lastHumidity = humidity;
@@ -506,21 +541,37 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        if (temp > 30 && humidity < 50) {
+        if ((temp > 28 && temp <=40) && (humidity > 20 && humidity <= 50)) {
             //weatherStatusTextView.setText("🌞 Trời nắng");
             weatherImageView.setImageResource(R.drawable.sun);
-        } else if (temp < 20 && humidity > 70) {
-            //weatherStatusTextView.setText("🌧 Trời mưa");
+        } else if ((temp >= 25 && temp <= 35) && (humidity >= 40 && humidity <= 60)) {
+            weatherImageView.setImageResource(R.drawable.sunandlitlecloud);
+        } else if ((temp >= 20 && temp <= 30) && (humidity >= 50 && humidity <= 70)) {
+            weatherImageView.setImageResource(R.drawable.goodwheather);
+        } else if ((temp >= 15 && temp <= 25) && (humidity >= 60 && humidity <= 80)) {
+            weatherImageView.setImageResource(R.drawable.cloud);
+        } else if ((temp >= 20 && temp <= 30) && (humidity >= 70 && humidity <= 80)) {
+            weatherImageView.setImageResource(R.drawable.smallrain);
+        } else if ((temp >= 18 && temp <= 28) && (humidity >= 80 && humidity <= 95)) {
+            weatherImageView.setImageResource(R.drawable.mediumrain);
+        } else if ((temp >= 15 && temp <=25) && humidity >= 85) {
             weatherImageView.setImageResource(R.drawable.rain);
-        } else if (temp < 0) {
+        } else if ((temp >= 20 && temp <= 30) && (humidity >= 80 && humidity <=90)) {
+            weatherImageView.setImageResource(R.drawable.bigrain);
+        } else if ((temp >= 18 && temp <= 28) && humidity > 90) {
+            weatherImageView.setImageResource(R.drawable.storm);
+        } else if ((temp >= -5 && temp <= 5) && (humidity >= 70 && humidity <= 90)) {
+            //weatherStatusTextView.setText("❄️ Tuyết rơi");
+            weatherImageView.setImageResource(R.drawable.bigsnow);
+        } else if ((temp >= -10 && temp <= 0) && (humidity >= 80)) {
             //weatherStatusTextView.setText("❄️ Tuyết rơi");
             weatherImageView.setImageResource(R.drawable.snow);
-        } else if (humidity > 80) {
+        } else if ((temp >= -2 && temp <= 8) && (humidity >= 75 && humidity <= 95)) {
+            //weatherStatusTextView.setText("❄️ Tuyết rơi");
+            weatherImageView.setImageResource(R.drawable.ice);
+        } else if ((temp >= 22 && temp <= 32) && (humidity >= 60 && humidity <= 80)) {
             //weatherStatusTextView.setText("☁️ Nhiều mây");
-            weatherImageView.setImageResource(R.drawable.cloud);
-        } else {
-            //weatherStatusTextView.setText("⛅ Thời tiết ổn định");
-            weatherImageView.setImageResource(R.drawable.goodwheather);
+            weatherImageView.setImageResource(R.drawable.sunafterrain);
         }
     }
 
@@ -541,4 +592,93 @@ public class MainActivity extends AppCompatActivity {
             imageViewTemp.setImageResource(R.drawable.tempup40);
         }
     }
+
+    private void updateHumi(Double humidity){
+        if (humidity == null) {
+            humidityImageView.setImageResource(R.drawable.humi);
+            return;
+        }
+        if(humidity == 0){
+            humidityImageView.setImageResource(R.drawable.humi);
+        }else if(humidity > 0 && humidity <= 25){
+            humidityImageView.setImageResource(R.drawable.humi25);
+        }else if(humidity > 25 && humidity <= 50){
+            humidityImageView.setImageResource(R.drawable.humi50);
+        }else if(humidity > 50 && humidity <= 75 ){
+            humidityImageView.setImageResource(R.drawable.humi75);
+        }else{
+            humidityImageView.setImageResource(R.drawable.humi100);
+        }
+    }
+
+    private void listenForData() {
+        new Thread(() -> {
+            byte[] buffer = new byte[1024];
+            int bytes;
+
+            while (true) {
+                try {
+                    bytes = (inputStream != null) ? inputStream.read(buffer) : 0;
+                    String receivedMessage = new String(buffer, 0, bytes);
+
+                    new Handler(Looper.getMainLooper()).post(() -> {
+                        TextView statusText = findViewById(R.id.gasStatus);
+                        Button btnDismissAlert = findViewById(R.id.btnDismissAlert);
+
+
+                        if (receivedMessage.contains("GAS_ALERT")) {
+                            statusText.setText("⚠️GAS IS LEAKING OR BURNING, PLEASE CHECK IMMEDIATELY!!!⚠️");
+                            statusText.setBackgroundResource(R.drawable.alert);
+                            btnDismissAlert.setVisibility(View.VISIBLE);
+                            animator = ObjectAnimator.ofObject(
+                                    statusText, "textColor",
+                                    new ArgbEvaluator(),
+                                    Color.RED, Color.WHITE, Color.RED
+                            );
+                            animator.setDuration(500);
+                            animator.setRepeatCount(ObjectAnimator.INFINITE);
+                            animator.setRepeatMode(ObjectAnimator.REVERSE);
+                            animator.start();
+
+                            Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+                            if (vibrator != null && vibrator.hasVibrator()) {
+                                VibrationEffect vibrationEffect = null;
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                    vibrationEffect = VibrationEffect.createWaveform(
+                                            new long[]{500, 500, 500}, // Rung 500ms, nghỉ 500ms, lặp lại
+                                            0  // Lặp vô hạn (để dừng phải gọi vibrator.cancel())
+                                    );
+                                }
+                                if (
+                                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                    vibrator.vibrate(vibrationEffect);
+                                }
+                            }
+
+                            btnDismissAlert.setOnClickListener(v -> {
+                                statusText.setText("");
+                                statusText.setBackground(null);
+                                animator.cancel();
+                                assert vibrator != null;
+                                vibrator.cancel();
+                                btnDismissAlert.setVisibility(View.GONE);
+                            });
+
+                        } else {
+                            statusText.setText("Dữ liệu nhận: " + receivedMessage);
+                            statusText.setText("");
+
+                            Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+                            if (vibrator != null) {
+                                vibrator.cancel();
+                            }
+                        }
+                    });
+                } catch (IOException e) {
+                    break;
+                }
+            }
+        }).start();
+    }
+
 }
